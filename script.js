@@ -1,4 +1,5 @@
 
+key_words=["if ", "for ", "def ", "while ", "else"]
 // Function to strip comments out 
 function strp_comm(s)
 {
@@ -67,6 +68,14 @@ function indent_check(indent, indent_req){
   return indent_error;
 }
 
+function update_line(s,v)
+{
+  if (v.trim() == "if"){if (s.search(":") > 0){s = s.replace(":"," THEN");s = s.replace("if"," IF"); return s }
+      else {return "error missing :"}} 
+  if (v.trim() == "else"){if (s.search(":") > 0){return "ELSE"}
+      else {return "error missing :"}}  
+}
+
 function parse(){
   // Set variables
   // Indent stack
@@ -77,6 +86,8 @@ function parse(){
   indent_num = 0
   // next line requires an indent flag
   indent_exp = false
+  //Stores values form indent parsing
+  indent_vals = []
  
   // Split code into lines
   var arr = code.split("\n")
@@ -97,18 +108,30 @@ function parse(){
       indent = indent_count(arr[i])
 
       // check indent level (ignore -1 as that is comment related)
-      if (indent > -1){
+      if (indent > -1)
+      {
         n = indent_check(indent, indent_exp)
         if (n > 0) {return "Indent error on line " + n }
         if (n == -1) {return "Indent error on line " + (i+1) }
         // check if next line requires an indent
-        indent_exp = keyword_search(arr[i])
+        indent_vals = keyword_search(arr[i])
+        indent_exp = indent_vals[0]
+        // update line if a key word is present and check where end is
+        if (indent_vals[1] == "") 
+        {
         }
-    }
+        else
+        {
+           arr[i] = update_line(arr[i],indent_vals[1])
+        };
 
+      }
+    }
   }
-  return "indent num is " + indent_num
-} 
+  return arr
+}
+
+
 // end of parse
 
 // Run the parser and output the results
@@ -118,7 +141,7 @@ function main(){
   code = document.getElementById('code').value
   // parse the code
   msg = parse(code);
-
+  msg = msg.reduce(function(result, element){return result + '\n' + element});
   // output result message
   document.getElementById("results").innerHTML = msg 
 }
@@ -126,15 +149,18 @@ function main(){
 function keyword_search(s)
 {
   // Search for keywords at the beginning of a line which require an indent after them
-  key_words=["if ", "for ", "def ", "while "]
+  key=[]
+
   for (j = 0; j < key_words.length; j++){
     n =  0;
     p = 0;
     n = s.search(/\S/);
     p = s.substring(n,n+key_words[j].length).search(key_words[j]);
-    if (p == 0){return true};
+    if (p == 0){key[0] = true; key[1]=key_words[j]; return key};
   };
-  return false
+  key[0] = false; 
+  key[1]=""; 
+  return key
 }
 
 
@@ -142,13 +168,14 @@ function keyword_search(s)
 // Used to test indiivual Javascript statements
 function tester()
 {    // Get the code string from index.html
+  key_word=[]
   document.getElementById("results").innerHTML = ""
   code = document.getElementById('code').value
   
  // n = code.search(/\S/)
   // s = code.substring(n,n+3).search("if ")
-  b = keyword_search(code)
+  key_word = keyword_search(code)
 
   // output result message
-  document.getElementById("results").innerHTML = b
+  document.getElementById("results").innerHTML = key_word[0] + ":" + key_word[1]
 }
