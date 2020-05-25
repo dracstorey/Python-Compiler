@@ -1,5 +1,6 @@
 
 key_words=["if ", "for ", "def ", "while ", "else"]
+arr = []
 // Function to strip comments out 
 function strp_comm(s)
 {
@@ -26,6 +27,7 @@ function indent_check(indent, indent_req){
     // check whether indent was required
     if (indent_req)
     {
+      // add indent on to stack and 
     indent_stack.push(indent)
     indent_num ++}
     else
@@ -47,7 +49,19 @@ function indent_check(indent, indent_req){
         {
           while (indent_stack.length > 1 && indent_stack[indent_stack.length-1] > indent)
           {
+           // alert(indent_stack + ":" + indent_comm_stack + ":" + end_insert)
             indent_stack.pop()
+            // put in end statements - if line is else and top is if ignore
+            var d = indent_comm_stack[indent_comm_stack.length-1].split("~")
+            //alert(d[1])
+            if (arr[i].trim() == "else:" && d[1].trim() == "if")
+            {}
+            else
+            {
+              indent_comm_stack.pop()
+              end_insert.push(i + "~" + "END " + d[1])
+            }
+ 
             indent_num = indent_num - 1
           }
         }
@@ -70,10 +84,11 @@ function indent_check(indent, indent_req){
 
 function update_line(s,v)
 {
-  if (v.trim() == "if"){if (s.search(":") > 0){s = s.replace(":"," THEN");s = s.replace("if"," IF"); return s }
+  if (v.trim() == "if"){if (s.search(":") > 0){s = s.replace(":"," THEN");s = s.replace("if"," IF");return s }
       else {return "error missing :"}} 
   if (v.trim() == "else"){if (s.search(":") > 0){return "ELSE"}
-      else {return "error missing :"}}  
+      else {return "error missing :"}} 
+  return s;  
 }
 
 function parse(){
@@ -88,9 +103,11 @@ function parse(){
   indent_exp = false
   //Stores values form indent parsing
   indent_vals = []
+  // final staements inserted
+  end_insert= []
  
   // Split code into lines
-  var arr = code.split("\n")
+  arr = code.split("\n")
   
   // loop around each line to strip comments, check for indents
   for (i = 0; i < arr.length; i++)
@@ -116,23 +133,50 @@ function parse(){
         // check if next line requires an indent
         indent_vals = keyword_search(arr[i])
         indent_exp = indent_vals[0]
+
         // update line if a key word is present and check where end is
         if (indent_vals[1] == "") 
         {
         }
         else
         {
-           arr[i] = update_line(arr[i],indent_vals[1])
+          // update syntax of the line to include pseudo syntax
+          arr[i] = update_line(arr[i],indent_vals[1]);
+          // add to indent stack to find enf of statement
+          if (indent_vals[1] == "else")
+          {
+          }
+          else
+          {
+          indent_comm_stack.push(indent + "~" + indent_vals[1]);
+         // alert(arr[i] + ":" + indent_comm_stack)
+          }
         };
 
       }
     }
+   // alert(end_insert)
+   // alert(indent_comm_stack)
+  }
+  // clear the indent stack of un-finished statement
+  while (indent_comm_stack. length > 0)
+  {var d = indent_comm_stack.pop().split("~");
+   end_insert.push(i + "~" + "END " + d[1])}
+  return arr
+}
+// end of parse
+
+function insert_array(arr,insert)
+{
+  num = 0
+  for (i = 0; i < insert.length; i++)
+  {
+    var d = insert[i].split("~")
+    arr.splice(parseInt(d[0])+num, 0, d[1]);
+    num = num + 1
   }
   return arr
 }
-
-
-// end of parse
 
 // Run the parser and output the results
 function main(){
@@ -141,10 +185,10 @@ function main(){
   code = document.getElementById('code').value
   // parse the code
   msg = parse(code);
+  msg = insert_array(msg, end_insert)
   msg = msg.reduce(function(result, element){return result + '\n' + element});
   // output result message
-  document.getElementById("results").innerHTML = msg 
-}
+  document.getElementById("results").innerHTML = msg}
 
 function keyword_search(s)
 {
