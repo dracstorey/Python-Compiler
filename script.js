@@ -1,6 +1,12 @@
 
 key_words=["if ", "for ", "def ", "while ", "else"]
 arr = []
+output = ""
+// Set the key words from output of parser
+  pseudo_code_words = ["assignment","turtle","forward","right","left"]
+
+
+
 // Function to strip comments out 
 function strp_comm(s)
 {
@@ -185,8 +191,13 @@ function main(){
   code = document.getElementById('code').value
   // parse the code
   msg = parse(code);
-  msg = insert_array(msg, end_insert)
-  msg = msg.reduce(function(result, element){return result + '\n' + element});
+  // If msg is an array then add the additional statements and reduce to string
+  if (Array.isArray(msg))
+  {
+    msg = insert_array(msg, end_insert)
+   msg = msg.reduce(function(result, element){return result + '\n' + element});
+   
+  }
   // output result message
   document.getElementById("results").innerHTML = msg}
 
@@ -207,19 +218,80 @@ function keyword_search(s)
   return key
 }
 
+function compile()
+{
+  // Get code from window
+  exec_code = document.getElementById('results').value
+  // slit into an array for each line
+  code_array =  exec_code.split("\n")
+  for (j = 0; j < code_array.length; j++){
+    // run each line of code and action the results
+   // alert (code_array[j])
+    alert(do_action(code_array[j]))
+    // if true comes back go onto next line otherwise report error on that line
+    //if (completed)
+   // {}else{document.getElementById('results').innerHTMl = "error line " + j+1}
+  }
+}
 
+function run_word(res_arr)
+{
+  if (res_arr[0] == "turtle")
+    {alert (res_arr)};
+  if (res_arr[0] == "assignment") 
+  {// add variable to global varaible array and assigment value and type
+    alert (res_arr[1] + ":" +  res_arr[2])}
+      if (res_arr[0] == "forward") 
+  {// add variable to global varaible array and assigment value and type
+    alert (res_arr[1])}
+      if (res_arr[0] == "right") 
+  {// add variable to global varaible array and assigment value and type
+    alert (res_arr[1])}
+      if (res_arr[0] == "left") 
+  {// add variable to global varaible array and assigment value and type
+    alert (res_arr[1])}
+}
+
+function do_action(my_res)
+{
+ // alert(my_res);
+  check = mymodule.parse(code_array[j])
+  alert(check)
+  s = check[0].split("~")
+  //alert(s)
+  if (pseudo_code_words.includes(s[0]))
+  {
+    run_word(s)
+    return true
+  }
+    else
+  {
+      return false
+  }
+
+}
+
+// Collapeses the results form the parser
+function collapse_res(s)
+{    // Get the code string from index.html
+
+s = s.replace (/\[/g,"")
+s = s.replace (/\]/g,"")
+s = s.replace (/ /g,"")
+s = s.replace (/(\r\n|\n|\r)/gm,"")
+var my_arr = s.split(",")
+return my_arr
+}
 
 // Used to test indiivual Javascript statements
 function tester()
 {    // Get the code string from index.html
-  key_word=[]
-  document.getElementById("results").innerHTML = ""
-  code = document.getElementById('code').value
-  
- // n = code.search(/\S/)
-  // s = code.substring(n,n+3).search("if ")
-  key_word = keyword_search(code)
-
+code = document.getElementById('code').value
+code = code.replace (/\[/g,"")
+code = code.replace (/\]/g,"")
+code = code.replace (/ /g,"")
+code = code.replace (/(\r\n|\n|\r)/gm,"")
+var my_arr = code.split(",")
   // output result message
-  document.getElementById("results").innerHTML = key_word[0] + ":" + key_word[1]
+  document.getElementById("results").innerHTML = my_arr
 }
