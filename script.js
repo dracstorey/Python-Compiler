@@ -1,10 +1,13 @@
 
-key_words=["if ", "for ", "def ", "while ", "else"]
 arr = []
-output = ""
-// Set the key words from output of parser
-  pseudo_code_words = ["assignment","turtle","forward","right","left"]
+pseudo_code_words = ["assignment","turtle","forward","right","left"]
+key_words=["if ", "for ", "def ", "while ", "else"]
+variables = []
+turtle_angle = 0
+turtle_x = 0
+turtle_y = 0
 
+graphics_points = []
 
 
 // Function to strip comments out 
@@ -114,7 +117,6 @@ function parse(){
  
   // Split code into lines
   arr = code.split("\n")
-  
   // loop around each line to strip comments, check for indents
   for (i = 0; i < arr.length; i++)
   {
@@ -186,21 +188,30 @@ function insert_array(arr,insert)
 
 // Run the parser and output the results
 function main(){
-    // Get the code string from index.html
-  document.getElementById("results").innerHTML = ""
+  // Set variables 
+  arr = []
+  output = ""
+  //variables = []
+  turtle_angle = 0
+  turtle_x = 0
+  turtle_y = 0   
+  graphics_points = []
+  // Reset output window
+  document.getElementById('results').innerHTML = ""
+  //get code from text area
   code = document.getElementById('code').value
   // parse the code
   msg = parse(code);
-  // If msg is an array then add the additional statements and reduce to string
+  // If msg is an array then add the additional statements and reduce to string otherwsie it's an error and just display it
   if (Array.isArray(msg))
   {
     msg = insert_array(msg, end_insert)
-   msg = msg.reduce(function(result, element){return result + '\n' + element});
-   
-  }
-  // output result message
-  document.getElementById("results").innerHTML = msg}
+    msg = msg.reduce(function(result, element){return result + '\n' + element});
+  };
+  document.getElementById('results').innerHTML = msg;
+}
 
+// Search for keywords in the python code
 function keyword_search(s)
 {
   // Search for keywords at the beginning of a line which require an indent after them
@@ -220,78 +231,153 @@ function keyword_search(s)
 
 function compile()
 {
-  // Get code from window
+  // Get psuedo code from window
   exec_code = document.getElementById('results').value
   // slit into an array for each line
   code_array =  exec_code.split("\n")
   for (j = 0; j < code_array.length; j++){
-    // run each line of code and action the results
-   // alert (code_array[j])
-    alert(do_action(code_array[j]))
-    // if true comes back go onto next line otherwise report error on that line
-    //if (completed)
-   // {}else{document.getElementById('results').innerHTMl = "error line " + j+1}
+  // run each line of code and action the results
+  if (code_array[j].trim() == ""){}
+  else
+  {
+    final_res = do_action(code_array[j])
+  }
+  // if true comes back go onto next line otherwise report error on that line
+  //if (completed)
+  // {}else{document.getElementById('results').innerHTMl = "error line " + j+1}
+  }
+  alert (graphics_points)
+}
+
+// check whetehr a variable is in the variable list
+function variable_exists(v){
+  var count = 0;
+  while (count < variables.length){
+    if (variables[count].label == v){
+      return count
+    }
+    count ++
+  }
+  return -1
+}
+
+// Check the key word and action the statement
+function run_word(res_arr)
+{
+
+  // Deal with turtle
+  if (res_arr[0] == "turtle")
+    {};
+
+  //deal with assignment
+  if (res_arr[0] == "assignment") 
+  {// add variable to global varaible array and assigment value and type
+    x = variable_exists(res_arr[1])
+    if (x == -1){
+      variables[variables.length] = {label:res_arr[1], value:res_arr[2]}
+    }
+    else
+    {variables[count].value = res_arr[2]}
+  };
+
+  // Deal with forward command
+  if (res_arr[0] == "forward") 
+  {// add variable to global varaible array and assigment value and type
+    turtle_x = turtle_x + Math.round(res_arr[1]*Math.sin(turtle_angle*Math.PI/180));
+    turtle_y = turtle_y + Math.round(res_arr[1]*Math.cos(turtle_angle*Math.PI/180));
+    graphics_points.push([turtle_x,turtle_y])
+  }
+
+
+  // deal with right command
+  if (res_arr[0] == "right") 
+  {// add variable to global varaible array and assigment value and type
+    turtle_angle = (turtle_angle + parseInt(res_arr[1]))%360
+  }
+  
+  // deal with left command
+  if (res_arr[0] == "left") 
+  {// add variable to global varaible array and assigment value and type
+    turtle_angle = (turtle_angle - parseInt(res_arr[1]))%360
   }
 }
 
-function run_word(res_arr)
+// Imparts correct action on a key word from the program
+function  do_action(my_res)
 {
-  if (res_arr[0] == "turtle")
-    {alert (res_arr)};
-  if (res_arr[0] == "assignment") 
-  {// add variable to global varaible array and assigment value and type
-    alert (res_arr[1] + ":" +  res_arr[2])}
-      if (res_arr[0] == "forward") 
-  {// add variable to global varaible array and assigment value and type
-    alert (res_arr[1])}
-      if (res_arr[0] == "right") 
-  {// add variable to global varaible array and assigment value and type
-    alert (res_arr[1])}
-      if (res_arr[0] == "left") 
-  {// add variable to global varaible array and assigment value and type
-    alert (res_arr[1])}
-}
-
-function do_action(my_res)
-{
- // alert(my_res);
   check = mymodule.parse(code_array[j])
-  alert(check)
   s = check[0].split("~")
-  //alert(s)
+  // for assignmnet replace variables after equal sign with 
+  if (s[0] == "assignment")
+  {
+    //find the equal sign
+    r = code_array[j].search("=")
+    //replace any variables after = sign with their values and recompose the string
+    str = code_array[j].substring(0,r) + replace_variables(code_array[j].substring(r, code_array[j].length))
+    //re-parse the line
+    // check = mymodule.parse(str)
+    //  s = check[0].split("~")
+  }
+  else
+  {
+    str = replace_variables(code_array[j])
+  }
+  // parse the correct line of code
+  check = mymodule.parse(str)
+  // split the result ready for action on the key word
+  s = check[0].split("~")
+  // check key word exists and do the action
   if (pseudo_code_words.includes(s[0]))
   {
     run_word(s)
     return true
   }
-    else
+  else
   {
-      return false
+    return false
   }
-
 }
 
-// Collapeses the results form the parser
-function collapse_res(s)
-{    // Get the code string from index.html
 
-s = s.replace (/\[/g,"")
-s = s.replace (/\]/g,"")
-s = s.replace (/ /g,"")
-s = s.replace (/(\r\n|\n|\r)/gm,"")
-var my_arr = s.split(",")
-return my_arr
+// replaces any variables in a string with the values of those variables form the variable list.
+function replace_variables(c){
+  var temp = ""
+  var count = 0
+ // alert (c.length)
+  while (count < c.length) 
+  {
+    
+    if (c[count].search(/[a-zA-Z0-9]/) > -1)
+    {
+      temp = temp + c[count]
+    }
+    else
+    {
+      place = variable_exists(temp)
+      if(place >-1)
+      {
+        c = c.substring(0,count-temp.length) + variables[place].value + c.substring(count,c.length)
+        count = count - temp.length
+      }
+      temp = ""
+    }
+    count = count + 1
+  };
+  // check if the final temp string is a varibale and replace 
+  place = variable_exists(temp)
+    if(place >-1)
+    {
+      c = c.substring(0,count-temp.length) + variables[place].value + c.substring(count,c.length)
+      count = count - temp.length
+    }
+    temp = "" 
+ return c
 }
 
 // Used to test indiivual Javascript statements
 function tester()
 {    // Get the code string from index.html
-code = document.getElementById('code').value
-code = code.replace (/\[/g,"")
-code = code.replace (/\]/g,"")
-code = code.replace (/ /g,"")
-code = code.replace (/(\r\n|\n|\r)/gm,"")
-var my_arr = code.split(",")
-  // output result message
-  document.getElementById("results").innerHTML = my_arr
+c = "/ello"
+alert(c[1])
+alert(c[1].search(/[a-zA-Z0-9]/))
 }
