@@ -283,7 +283,13 @@ function function_sweep()
           f_end = i_count
           if (x == -1)
            {
-             function_list[function_list.length] = {label:s[1], param:s[2], start:f_start, end:f_end}
+             var var_array= s[2].split(",")
+             var p_list = []
+             for (y = 0; y < var_array.length; y++)
+             {
+               if (var_array[y].trim() == ""){}else{p_list[p_list.length] = (var_array[y].trim())}
+             }
+             function_list[function_list.length] = {label:s[1], param:p_list, start:f_start, end:f_end}
            } 
           f_true = false
         }
@@ -449,7 +455,7 @@ function run_word(res_arr)
   if (res_arr[0] == "func_call")
   {
     curr_line = j_count
-    run_function(res_arr[1])
+    run_function(res_arr[1],res_arr[2])
     j_count = curr_line
     alert(j_count)
   }
@@ -457,15 +463,32 @@ function run_word(res_arr)
 };
 
 // runs a function call 
-function run_function (f){
+function run_function (f,u){
+  var a_list = []
+  a = u.split(",")
+  for (y = 0; y < a.length; y++)
+    {
+      if (a[y].trim() == ""){}else{a_list[a_list.length] = a[y].trim()}
+    }
+  func_var_list = function_list[function_exists(f.trim())].param
+  if (a_list.length != func_var_list.length)
+    {alert ("different parameter lists")}
+  load_variables(func_var_list, a_list)
   j_count = function_list[function_exists(f.trim())].start + 1
   while (j_count < function_list[function_exists(f)].end-1)
   {
-    alert(j_count + ":" + code_array[j_count].trim())
     do_action (code_array[j_count].trim());
     j_count ++;
   }
 };
+
+function load_variables(d,c)
+{
+  for (k = 0; k < d.length; k++)
+  {
+    variables[variables.length] = {label:d[k], value:c[k]}
+  }
+}
 
 function find_while_points()
 {
