@@ -1,0 +1,99 @@
+// Program Statements
+// ===========================
+//
+{var my_list = []; var imports = ["turtle"];}
+program = 
+( 
+	_ i: Imports {return i} / 
+    _ t: Turtle_action {return t} /
+	_ a: Assignment _ {return a} / 
+	_ o: Output _ {return o} / 
+	_ "IF"  _ b:bool _ "THEN" {return ["if",b].join("~")}/
+    _ "WHILE" _ b:bool _ {return ["while",b].join("~")} /
+    _ "FUNCTION" _ v:var_label _ "(" _ p:list_of_parameters _")" {return ["function",v,p].join("~")} /
+    _ f: Func_call
+)+ 
+
+// Imports
+Imports = _ "import" _ "turtle" _ {return "turtle"}
+//
+Turtle_action = _ 'turtle' '\.' f: "forward" _ '(' i:var ')' _ {return ["forward",i].join("~")} / 
+				_ 'turtle' '\.' f: "forward" _ '(' i:Integer ')' _ {return ["forward",i].join("~")} / 
+                _ 'turtle' '\.' "right" _ '(' i: var ')' _ {return ["right",i].join("~")} / 
+                _ 'turtle' '\.' "right" _ '(' i: Integer ')' _ {return ["right",i].join("~")} / 
+                _ 'turtle' '\.' "left" _ '(' i: var ')' _ {return ["left",i].join("~")} /
+                _ 'turtle' '\.' "right" _ '(' i: Integer ')' _ {return ["right",i].join("~")} 
+
+// Assigment
+Assignment =  _ v:var_label _ "=" _ f: Func_call _ {return ["assignment",v,f].join("~")} /
+              _ v:var_label _ "=" _ "int" _ "(" _ "input" _ "("  _ e:txt _ ")" _ ")" _{return ["input",v].join("~")}/
+              _ v:var_label _ "=" _ e:Expression _ {return ["assignment",v,e].join("~")} 
+              
+// Output
+Output =   _ "print" _ "(" e:(empty_text / txt) _ ")" {return ["print",e.replace(/\"/g, "")].join("~")} /
+           _ "print" _ "(" e:(Expression) _ ")" {return ["print",e].join("~")} 
+         
+// list_of_parameters
+list_of_parameters = v:(_ (var_label/Integer) _ ("," _ (var_label/Integer) _ )*) {return v} /
+                     _ v:var_label _ {return v } / 
+                     _
+                       
+ Func_call = f:var_label _ "(" _ p:list_of_parameters _")" {return ["func_call",f,p].join("~")}
+ 
+// Text and letters and variables
+empty_text = '""' {return ""}
+txt = t:('"' (letters) '"') {return t.join('')}
+letters = x:([a-zA-Z]/ " " / "'" / '@' /'_')* {return x.reduce(function(result,element){return result + element})}
+var = v: [a-z]+ 
+var_label = v: ([a-zA-Z] / "_")+ {return v.reduce(function(result,element){return result + element})}
+
+bool = head:boolexpr _ "or" _ tail:boolexpr _ {return (head || tail)} /
+       head:boolexpr _ "and" _ tail:boolexpr _ {return (head && tail)} /
+       b:boolexpr {return b}
+
+// Boolean expressions
+boolexpr = 
+_ "(" _ b:boolexpr _ ")" {return b}/
+_ e:Expression _ "<" _ f:Expression _ {if (parseInt(e)<parseInt(f)){return true}else{return false}}/ 
+_ e:Expression _ "<=" _ f:Expression _  {if (parseInt(e)<=parseInt(f)){return true}else{return false}}/ 
+_ e:Expression _ ">=" _ f:Expression _  {if (parseInt(e)>=parseInt(f)){return e}else{return f}}/ 
+ _ e:Expression _ ">" _ f:Expression _ {if (parseInt(e)>parseInt(f)){return true}else{return false}} /
+ _ e:Expression _ "==" _ f:Expression _ {if (parseInt(e)==parseInt(f)){return true}else{return false}}/
+ _ "not" _ "(" b:boolexpr ")" {return !(b)} /
+"true"
+
+
+
+// Simple Arithmetics Grammar
+
+Expression
+  = head:Term tail:(_ ("+" / "-") _ Term)* {
+      return tail.reduce(function(result, element) {
+        if (element[1] === "+") { return parseInt(result) + parseInt(element[3]); }
+        if (element[1] === "-") { return parseInt(result) - parseInt(element[3]); }
+      }, head);
+    }
+
+
+Term
+  = head:Pwer tail:(_ ( "*" / "/") _ Pwer)* {
+      return tail.reduce(function(result, element) {
+        if (element[1] === "*") { return parseInt(result) * parseInt(element[3]) ; }
+        if (element[1] === "/") { return parseInt(result) / parseInt(element[3]); }
+      }, head);
+    }
+ 
+Pwer = head:Factor tail:(_ ("^") _ Factor)* {
+		return tail.reduce(function(result, element)
+        {return Math.pow(result, element[3]);},head);}
+
+Factor
+  = "(" _ e:Expression _ ")" {return e}
+  / i:Integer {return i} / v:var_label{return v}
+
+Integer "integer"
+  = _ n:[0-9]+  {return parseInt(n.reduce(function(result, element){return result + element}))}
+
+_ "whitespace"
+  = [ \t\n\r]* 
+  

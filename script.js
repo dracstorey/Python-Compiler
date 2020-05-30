@@ -1,14 +1,16 @@
 
 arr = []
-pseudo_code_words = ["assignment","turtle","forward","right","left"]
+pseudo_code_words = ["assignment","turtle","forward","right","left","if", "while", "print", "input", "function","func_call"]
 key_words=["if ", "for ", "def ", "while ", "else"]
 variables = []
 turtle_angle = 0
 turtle_x = 0
 turtle_y = 0
-
 graphics_points = []
-
+print_list=[]
+input_values = [14]
+input_pointer = 0
+function_list = []
 
 // Function to strip comments out 
 function strp_comm(s)
@@ -68,7 +70,9 @@ function indent_check(indent, indent_req){
             else
             {
               indent_comm_stack.pop()
-              end_insert.push(i + "~" + "END " + d[1])
+              var temp = d[1]
+              if (temp.trim() == "def")(temp = "function");
+              end_insert.push(i + "~" + "END " + temp.toUpperCase())
             }
  
             indent_num = indent_num - 1
@@ -97,6 +101,8 @@ function update_line(s,v)
       else {return "error missing :"}} 
   if (v.trim() == "else"){if (s.search(":") > 0){return "ELSE"}
       else {return "error missing :"}} 
+  if (v.trim() == "while"){if (s.search(":") > 0){s = s.replace(":","");s = s.replace("while","WHILE");return s}else {return "error missing :"}}
+  if (v.trim() == "def"){if (s.search(":") > 0){s = s.replace(":","");s = s.replace("def","FUNCTION");return s}else {return "error missing :"}}    
   return s;  
 }
 
@@ -169,7 +175,9 @@ function parse(){
   // clear the indent stack of un-finished statement
   while (indent_comm_stack. length > 0)
   {var d = indent_comm_stack.pop().split("~");
-   end_insert.push(i + "~" + "END " + d[1])}
+  var temp = d[1]
+  if (temp.trim() == "def")(temp = "function");
+   end_insert.push(i + "~" + "END " + temp.toUpperCase())}
   return arr
 }
 // end of parse
@@ -186,20 +194,32 @@ function insert_array(arr,insert)
   return arr
 }
 
+//
+function go()
+{
+  input_pointer = 0;
+  python_code = document.getElementById('code').value
+  // run the program for each of the inputs
+  for (inp_count = 0; inp_count < input_values.length; inp_count++)
+    {run_prog(python_code)};
+}
+
+
 // Run the parser and output the results
-function main(){
+function run_prog(p){
   // Set variables 
   arr = []
   output = ""
-  //variables = []
+  variables = []
   turtle_angle = 0
   turtle_x = 0
   turtle_y = 0   
   graphics_points = []
-  // Reset output window
-  document.getElementById('results').innerHTML = ""
+  print_list = []
+
+ 
   //get code from text area
-  code = document.getElementById('code').value
+  code = p
   // parse the code
   msg = parse(code);
   // If msg is an array then add the additional statements and reduce to string otherwsie it's an error and just display it
@@ -207,8 +227,16 @@ function main(){
   {
     msg = insert_array(msg, end_insert)
     msg = msg.reduce(function(result, element){return result + '\n' + element});
-  };
-  document.getElementById('results').innerHTML = msg;
+    document.getElementById('results').innerHTML = msg;
+    compile(msg);
+    alert ("Graphics=" + graphics_points)
+    alert ("Output=" + print_list)
+  }
+  else
+  {
+    alert (msg);  document.getElementById('results').innerHTML = msg;
+  }
+
 }
 
 // Search for keywords in the python code
@@ -229,27 +257,84 @@ function keyword_search(s)
   return key
 }
 
-function compile()
+function function_sweep()
+{
+  i_count = 0;
+  f_true = false;
+  while (i_count < code_array.length)
+  {
+    if (code_array[i_count].substring(0,8) == "FUNCTION" && f_true == false)
+    {
+      f_start = i_count;
+      f_true;
+      f_def = code_array[i_count]
+    }
+    else
+    {
+      if (f_true == true)
+        {alert ("function definitions overlap")}
+      else
+      {
+        if(code_array[i_count].substring(0,13) == "END FUNCTION")
+        {
+          check = mymodule.parse(f_def)
+          s = check[0].split("~")
+          x = function_exists(s[1])
+          f_end = i_count
+          if (x == -1)
+           {
+             function_list[function_list.length] = {label:s[1], param:s[2], start:f_start, end:f_end}
+           } 
+          f_true = false
+        }
+      }
+    }
+      i_count ++
+  }
+}
+
+function compile(m)
 {
   // Get psuedo code from window
   exec_code = document.getElementById('results').value
+
+  //exec_code = m
   // slit into an array for each line
   code_array =  exec_code.split("\n")
-  for (j = 0; j < code_array.length; j++){
-  // run each line of code and action the results
-  if (code_array[j].trim() == ""){}
-  else
+  
+  j_count = 0
+  function_sweep ()
+  j_count = 0
+  while (j_count < code_array.length)
   {
-    final_res = do_action(code_array[j])
+    // run each line of code and action the results
+    if (code_array[j_count].trim() == ""){}
+    else
+    {
+      //alert ("main: " + j_count + ":" + code_array[j_count])
+      final_res = do_action(code_array[j_count])
+    }
+    j_count ++
+    // if true comes back go onto next line otherwise report error on that line
+    //if (completed)
+    // {}else{document.getElementById('results').innerHTMl = "error line " + j+1}
   }
-  // if true comes back go onto next line otherwise report error on that line
-  //if (completed)
-  // {}else{document.getElementById('results').innerHTMl = "error line " + j+1}
+
+}
+// check whetehr a function is in the function list
+function function_exists(v){
+  var count = 0;
+  while (count < function_list.length){
+    if (function_list[count].label == v){
+      return count
+    }
+    count ++
   }
-  alert (graphics_points)
+  return -1
 }
 
-// check whetehr a variable is in the variable list
+
+// check whether a variable is in the variable list
 function variable_exists(v){
   var count = 0;
   while (count < variables.length){
@@ -264,7 +349,6 @@ function variable_exists(v){
 // Check the key word and action the statement
 function run_word(res_arr)
 {
-
   // Deal with turtle
   if (res_arr[0] == "turtle")
     {};
@@ -277,7 +361,7 @@ function run_word(res_arr)
       variables[variables.length] = {label:res_arr[1], value:res_arr[2]}
     }
     else
-    {variables[count].value = res_arr[2]}
+    {variables[x].value = res_arr[2]}
   };
 
   // Deal with forward command
@@ -287,7 +371,6 @@ function run_word(res_arr)
     turtle_y = turtle_y + Math.round(res_arr[1]*Math.cos(turtle_angle*Math.PI/180));
     graphics_points.push([turtle_x,turtle_y])
   }
-
 
   // deal with right command
   if (res_arr[0] == "right") 
@@ -300,35 +383,174 @@ function run_word(res_arr)
   {// add variable to global varaible array and assigment value and type
     turtle_angle = (turtle_angle - parseInt(res_arr[1]))%360
   }
+
+  // deal with the IF statement
+  if (res_arr[0] == "if")
+  {
+    var my_if = find_if_points().split("~")
+   // alert(my_if)
+    if (res_arr[1] == "true")
+    {
+      for (n = my_if[0]; n < my_if[1] -1 ; n++)
+      {
+      j_count = n
+      //alert ("IF" + j_count + ":" + code_array[j_count].trim())
+      do_action (code_array[j_count].trim())
+      }
+    }
+    else
+    {
+      for (n = my_if[1]; n < my_if[2] ; n++)
+      {j_count = n;
+      //alert ("ELSE" + j_count + ":" + code_array[j_count].trim())
+      do_action(code_array[n].trim())}
+    }
+    //j_count = end_pt
+    j_count = my_if[2] 
+    //alert(j_count)
+  };
+
+  // deal with WHILE loop
+  if (res_arr[0] == "while")
+  {
+    if (res_arr[1] == "true")
+    {
+      var my_while = find_while_points().split("~")
+      //alert(my_while)
+      j_count  = my_while[0];
+      while (j_count < my_while[1])
+      {
+        //alert ("while " + j_count + ":" + code_array[j_count].trim())
+        do_action (code_array[j_count].trim())
+        j_count ++
+      }
+      j_count = my_while[0] - 2
+    }
+    else
+    {
+      var my_while = find_while_points().split("~")
+      j_count = my_while[1]
+    }
+  };
+
+  // deal with print
+  if (res_arr[0] == "print")
+  {
+    print_list.push(res_arr[1])
+  };
+
+  // Skip functions when running the code 
+  if (res_arr[0] == "function")
+  {
+    j_count = function_list[function_exists(res_arr[1])].end
+  }
+
+   // When  function is called execute it then return
+  if (res_arr[0] == "func_call")
+  {
+    curr_line = j_count
+    run_function(res_arr[1])
+    j_count = curr_line
+    alert(j_count)
+  }
+
+};
+
+// runs a function call 
+function run_function (f){
+  j_count = function_list[function_exists(f.trim())].start + 1
+  while (j_count < function_list[function_exists(f)].end-1)
+  {
+    alert(j_count + ":" + code_array[j_count].trim())
+    do_action (code_array[j_count].trim());
+    j_count ++;
+  }
+};
+
+function find_while_points()
+{
+j_count ++;
+start_pt = j_count;
+code_line = code_array[j_count].trim();
+while (code_line != "END WHILE")
+  {
+    j_count ++
+    code_line = code_array[j_count].trim();
+  }
+end_pt = j_count
+return start_pt + "~" + end_pt
+}
+
+function find_if_points()
+{
+  j_count ++;
+  else_pt = -1
+  start_pt = j_count;
+  code_line = code_array[j_count].trim();
+  while (code_line != "END IF")
+  {
+    code_line = code_array[j_count].trim();
+    if (code_line == "ELSE")
+    {else_pt = j_count+1}
+    j_count ++
+  }
+  end_pt = j_count - 1
+  if (else_pt == -1){else_pt = end_pt}
+  return start_pt + "~" + else_pt + "~" + end_pt
 }
 
 // Imparts correct action on a key word from the program
 function  do_action(my_res)
 {
-  check = mymodule.parse(code_array[j])
-  s = check[0].split("~")
-  // for assignmnet replace variables after equal sign with 
-  if (s[0] == "assignment")
-  {
-    //find the equal sign
-    r = code_array[j].search("=")
-    //replace any variables after = sign with their values and recompose the string
-    str = code_array[j].substring(0,r) + replace_variables(code_array[j].substring(r, code_array[j].length))
-    //re-parse the line
-    // check = mymodule.parse(str)
-    //  s = check[0].split("~")
+  if (my_res.trim() == "")
+    {}
+    else{
+    check = mymodule.parse(code_array[j_count])
+    s = check[0].split("~")
+    // for assignmnet replace variables after equal sign with 
+    if (s[0] == "assignment")
+    {
+      //find the equal sign
+      r = code_array[j_count].search("=")
+      //replace any variables after = sign with their values and recompose the string
+      str = code_array[j_count].substring(0,r) + replace_variables(code_array[j_count].substring(r, code_array[j_count].length))
+      //re-parse the line
+      // check = mymodule.parse(str)
+      //  s = check[0].split("~")
+    }
+    else
+    {
+      if (s[0] == "input")
+      {
+        //find the equal sign
+        r = code_array[j_count].search("=")
+        //replace any variables after = sign with their values and recompose the string
+        str = code_array[j_count].substring(0,r) + replace_variables(code_array[j_count].substring(r, code_array[j_count].length))
+        //re-parse the line
+        // check = mymodule.parse(str)
+        //  s = check[0].split("~")
+        str = s[1] + "=" + input_values[input_pointer]
+        input_pointer ++
+      }
+      else
+      {
+      str = replace_variables(code_array[j_count])
+      }
+    }
   }
-  else
-  {
-    str = replace_variables(code_array[j])
-  }
+
+
   // parse the correct line of code
+  //alert ("parse " + str)
   check = mymodule.parse(str)
+  //alert(check)
   // split the result ready for action on the key word
   s = check[0].split("~")
+  //alert(s)
   // check key word exists and do the action
   if (pseudo_code_words.includes(s[0]))
   {
+   //alert (s)
     run_word(s)
     return true
   }
@@ -342,7 +564,7 @@ function  do_action(my_res)
 // replaces any variables in a string with the values of those variables form the variable list.
 function replace_variables(c){
   var temp = ""
-  var count = 0
+ count = 0
  // alert (c.length)
   while (count < c.length) 
   {
