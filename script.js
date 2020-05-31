@@ -11,6 +11,12 @@ print_list=[]
 input_values = [14]
 input_pointer = 0
 function_list = []
+graphics_answers = []
+graphics_answers.push([0,0])
+graphics_answers.push([0,100])
+graphics_answers.push([100,100])
+graphics_answers.push([100,0])
+graphics_answers.push([0,0])
 
 // Function to strip comments out 
 function strp_comm(s)
@@ -204,6 +210,30 @@ function go()
     {run_prog(python_code)};
 }
 
+// check graphics points
+function check_graphics(a,b)
+{
+  graph_correct = "correct"
+    if (a.length == b.length)
+    {
+      z = 0
+      while (z < a.length && graph_correct == "correct")
+      {
+       val1 = (a[z][0] == b[z][0])
+       val2 = (a[z][1] == b[z][1])
+        if(val1 && val2)
+        {}
+        else 
+        {graph_correct = "not correct: answer should be: " + graphics_answers}
+        z++;
+      }
+    }
+    else
+    {
+      graph_correct  = "incorrect - you have not visited enough points"
+    }
+    return graph_correct
+}
 
 // Run the parser and output the results
 function run_prog(p){
@@ -214,27 +244,36 @@ function run_prog(p){
   turtle_angle = 0
   turtle_x = 0
   turtle_y = 0   
-  graphics_points = []
+  graphics_points = [];graphics_points.push([0,0])
   print_list = []
 
  
   //get code from text area
   code = p
   // parse the code
-  msg = parse(code);
-  // If msg is an array then add the additional statements and reduce to string otherwsie it's an error and just display it
-  if (Array.isArray(msg))
-  {
-    msg = insert_array(msg, end_insert)
-    msg = msg.reduce(function(result, element){return result + '\n' + element});
+  try {
+    msg = parse(code);
+    // If msg is an array then add the additional statements and reduce to string otherwsie it's an error and just display it
+    if (Array.isArray(msg))
+    {
+      msg = insert_array(msg, end_insert)
+      msg = msg.reduce(function(result, element){return result + '\n' + element});
+      document.getElementById('results').innerHTML = msg;
+      compile(msg);
+      //check graphics_points against graphics_answers
+      graph_correct = check_graphics(graphics_points,graphics_answers)
+
+      document.getElementById('graphics').innerHTML = "Graphics points; " + graphics_points + "<br>" + graph_correct;
+      document.getElementById('printer').innerHTML = "Printer output: " + print_list;
+    }
+    else
+    {
+    // alert (msg);  
     document.getElementById('results').innerHTML = msg;
-    compile(msg);
-    alert ("Graphics=" + graphics_points)
-    alert ("Output=" + print_list)
+    }
   }
-  else
-  {
-    alert (msg);  document.getElementById('results').innerHTML = msg;
+  catch(err) {
+    alert ("See pseudo code for error on line " + j_count+1);
   }
 
 }
